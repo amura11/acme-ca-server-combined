@@ -1,0 +1,68 @@
+name: Sync & Build Docker Image
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  auto-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get upstream digest
+        id: upstream
+        run: |
+          DIGEST=$(curl -sI -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+            "https://registry.hub.docker.com/v2/library/knrdl/acme-ca-server/manifests/latest" \
+            | grep -i Docker-Content-Digest | awk '{print $2}' | tr -d $'\r')
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          echo "Upstream latest digest: $DIGEST"
+
+      - name: Cache previous digest
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: digest.txt
+          key: upstream-latest-digest
+
+      - name: Check if digest changed
+        id: digest-check
+        run: |
+          if [ -f digest.txt ] && grep -q "${{ steps.upstream.outputs.digest }}" digest.txt; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in upstream digest."
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "${{ steps.upstream.outputs.digest }}" > digest.txt
+            echo "Upstream digest changed. Will build."
+          fi
+
+      - name: Docker Hub Login
+        if: steps.digest-check.outputs.changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull upstream labels and tags
+        if: steps.digest-check.outputs.changed == 'true'
+        run: |
+          docker pull knrdl/acme-ca-server:latest
+          UPSTREAM_TAG=$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' knrdl/acme-ca-server:latest || echo "latest")
+          echo "UPSTREAM_TAG=$UPSTREAM_TAG" >> $GITHUB_ENV
+          echo "Using upstream tag: $UPSTREAM_TAG"
+
+      - name: Build and Push updated image
+        if: steps.digest-check.outputs.changed == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/your-repo-name:${{ env.UPSTREAM_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/your-repo-name:latest
+          build-args: |
+            UPSTREAM_TAG=latest

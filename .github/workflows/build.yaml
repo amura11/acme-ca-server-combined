@@ -1,0 +1,33 @@
+name: Build Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_tag:
+        description: 'Tag of knrdl/acme-ca-server to build from'
+        required: true
+        default: 'latest'
+
+jobs:
+  manual-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker Hub Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Manually
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/acme-ca-server-combined:${{ github.event.inputs.upstream_tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/acme-ca-server-combined:latest
+          build-args: |
+            UPSTREAM_TAG=${{ github.event.inputs.upstream_tag }}
