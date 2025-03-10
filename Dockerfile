@@ -45,6 +45,4 @@ RUN chmod +x /entrypoint.sh
 
 WORKDIR /app
 
-USER appuser
-
 ENTRYPOINT ["/entrypoint.sh"]
