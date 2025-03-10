@@ -1,6 +1,9 @@
 ARG UPSTREAM_TAG=latest
 FROM knrdl/acme-ca-server:${UPSTREAM_TAG}
 
+# Switch back to root
+USER root
+
 # Install PostgreSQL and dependencies
 RUN apk update && apk add --no-cache \
     postgresql \
@@ -31,14 +34,16 @@ VOLUME ["/data"]
 ENV PUID=99 \
     PGID=100 \
     UMASK=022 \
-    DB_USER=appuser \
-    DB_PASSWORD=apppass \
-    DB_NAME=appdb
+    DB_USER=postgres \
+    DB_PASSWORD=p0stgr3sp@ssw0rd \
+    DB_NAME=acme-ca
 
 # Copy and set entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 WORKDIR /app
+
+USER appuser
 
 ENTRYPOINT ["/entrypoint.sh"]
