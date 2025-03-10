@@ -7,6 +7,8 @@ usermod -o -u "$PUID" appuser
 # Set UMASK
 umask "$UMASK"
 
+mkdir -p /data/db
+
 # Ownership fix
 chown -R appuser:appuser /data/db
 
