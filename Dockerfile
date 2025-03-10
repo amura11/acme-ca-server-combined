@@ -36,7 +36,8 @@ ENV PUID=99 \
     UMASK=022 \
     DB_USER=postgres \
     DB_PASSWORD=p0stgr3sp@ssw0rd \
-    DB_NAME=acme-ca
+    DB_NAME=acme-ca \
+    EXTERNAL_URL=https://external.url
 
 # Copy and set entrypoint
 COPY entrypoint.sh /entrypoint.sh
