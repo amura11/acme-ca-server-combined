@@ -21,6 +21,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Get upstream CMD
+        id: get-cmd
+        run: |
+          CMD=$(docker inspect --format '{{json .Config.Cmd}}' knrdl/acme-ca-server:latest)
+          echo "UPSTREAM_CMD=$CMD" >> $GITHUB_ENV
+          echo "Detected CMD: $CMD"
+
       - name: Build and Push Manually
         uses: docker/build-push-action@v5
         with:
@@ -31,3 +38,4 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/acme-ca-server-combined:latest
           build-args: |
             UPSTREAM_TAG=${{ github.event.inputs.upstream_tag }}
+            UPSTREAM_CMD=${{ env.UPSTREAM_CMD }}

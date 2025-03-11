@@ -55,6 +55,14 @@ jobs:
           echo "UPSTREAM_TAG=$UPSTREAM_TAG" >> $GITHUB_ENV
           echo "Using upstream tag: $UPSTREAM_TAG"
 
+      - name: Get upstream CMD
+        if: steps.digest-check.outputs.changed == 'true'
+        id: get-cmd
+        run: |
+          CMD=$(docker inspect --format '{{json .Config.Cmd}}' knrdl/acme-ca-server:latest)
+          echo "UPSTREAM_CMD=$CMD" >> $GITHUB_ENV
+          echo "Detected CMD: $CMD"
+
       - name: Build and Push updated image
         if: steps.digest-check.outputs.changed == 'true'
         uses: docker/build-push-action@v5

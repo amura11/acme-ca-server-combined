@@ -37,7 +37,8 @@ ENV PUID=99 \
     DB_USER=postgres \
     DB_PASSWORD=p0stgr3sp@ssw0rd \
     DB_NAME=acme-ca \
-    EXTERNAL_URL=https://external.url
+    EXTERNAL_URL=https://external.url \
+    CA_ENCRYPTION_KEY=
 
 # Copy and set entrypoint
 COPY entrypoint.sh /entrypoint.sh
@@ -46,3 +47,5 @@ RUN chmod +x /entrypoint.sh
 WORKDIR /app
 
 ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--no-server-header"]
